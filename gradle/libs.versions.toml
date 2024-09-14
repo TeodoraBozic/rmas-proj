@@ -1,5 +1,11 @@
 [versions]
 agp = "8.6.0"
+coilCompose = "2.4.0"
+espressoCoreVersion = "3.6.1"
+firebaseAuthVersion = "23.5.0"
+firebaseBom = "33.2.0"
+googlePlayServicesMaps = "18.2.0"
+googleServices = "4.4.2"
 kotlin = "1.9.0"
 coreKtx = "1.10.1"
 junit = "4.13.2"
@@ -8,9 +14,41 @@ espressoCore = "3.5.1"
 lifecycleRuntimeKtx = "2.6.1"
 activityCompose = "1.8.0"
 composeBom = "2024.04.01"
+constraintlayoutCompose = "1.0.1"
+lifecycleViewmodelCompose = "2.8.5"
+mapsCompose = "2.2.0"
+mapsComposeVersion = "4.4.1"
+materialIconsExtended = "1.7.1"
+navigationRuntimeKtx = "2.8.0"
+firebaseAuthKtx = "23.0.0"
+lifecycleCompiler = "2.8.5"
+navigationCommonKtx = "2.8.0"
+navigationCompose = "2.8.0"
+googleGmsGoogleServices = "4.4.2"
+playServicesLocation = "21.3.0"
+playServiceslocationVersion = "21.2.0"
+playServicesMaps = "19.0.0"
+firebaseStorageKtx = "21.0.0"
+playServicesMapsVersion = "18.0.0"
+runtimeLivedata = "1.7.1"
+secretsGradlePlugin = "2.0.1"
+uiTestJunit4 = "1.7.1"
+uiTooling = "1.7.1"
+uiToolingVersion = "1.7.1"  # Zamenjeno sa stvarnom verzijom
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-espresso-core-v361 = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCoreVersion" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+androidx-ui-tooling-vlatestversion = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiToolingVersion" }
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-auth = { module = "com.google.firebase:firebase-auth" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+google-firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuthVersion" }
+google-services = { module = "com.google.gms:google-services", version.ref = "googleServices" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -24,8 +62,27 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "constraintlayoutCompose" }
+androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
+firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
+androidx-lifecycle-compiler = { group = "androidx.lifecycle", name = "lifecycle-compiler", version.ref = "lifecycleCompiler" }
+androidx-navigation-common-ktx = { group = "androidx.navigation", name = "navigation-common-ktx", version.ref = "navigationCommonKtx" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "mapsCompose" }
+maps-compose-v441 = { module = "com.google.maps.android:maps-compose", version.ref = "mapsComposeVersion" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
+firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
+androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
+play-services-maps-v1800 = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMapsVersion" }
+play-services-maps-v1820 = { module = "com.google.android.gms:play-services-maps", version.ref = "googlePlayServicesMaps" }
+play-serviceslocation = { module = "com.google.android.gms:play-serviceslocation", version.ref = "playServiceslocationVersion" }
+ui = { module = "androidx.compose.ui:ui", version.ref = "uiToolingVersion" }
+ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "uiTestJunit4" }
+ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiTooling" }
+ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-
+google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }

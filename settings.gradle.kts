@@ -11,7 +11,9 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
+
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
@@ -21,4 +23,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "RMAS18577"
 include(":app")
- 
