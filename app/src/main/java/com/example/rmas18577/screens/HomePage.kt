@@ -19,6 +19,7 @@ import androidx.navigation.NavController
 import com.example.rmas18577.components.ButtonComponent
 import com.example.rmas18577.components.ClickableTextLogin
 import com.example.rmas18577.components.LoginOrRegisterButtons
+import com.example.rmas18577.ui.theme.Purple80
 import com.example.rmasprojekat18723.data.LoginUIEvent
 import com.example.rmasprojekat18723.data.LoginViewModel
 import com.example.rmasprojekat18723.data.SignupUIEvent
@@ -57,7 +58,7 @@ fun HomePage(loginViewModel: LoginViewModel = viewModel(), signupViewModel: Sign
             style = TextStyle(
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Normal,
-                color = Color.White
+                color = Purple80
             ),
             textAlign = TextAlign.Center
         )

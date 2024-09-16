@@ -64,12 +64,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
+import androidx.constraintlayout.compose.Visibility
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.rmas18577.data.NavigationItem
 import com.example.rmas18577.ui.theme.Pink80
 import com.example.rmas18577.ui.theme.Purple80
 import com.google.android.gms.maps.MapView
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 
 
 @Composable
@@ -140,6 +143,7 @@ fun MyTextFieldComponent(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PasswordTextFieldComponent(
     labelValue: String,
@@ -153,7 +157,7 @@ fun PasswordTextFieldComponent(
 ) {
     var password by remember { mutableStateOf("") }
 
-    TextField(
+    OutlinedTextField(
         value = password,
         onValueChange = {
             password = it
@@ -170,12 +174,27 @@ fun PasswordTextFieldComponent(
                     contentDescription = null
                 )
             }
-        }
+        },
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            focusedBorderColor = Color.Black,
+            focusedLabelColor = Color.Gray,
+            cursorColor = Pink80,
+            containerColor = Color.Transparent
+        ),
+        modifier = modifier.fillMaxWidth()
     )
+
     if (errorStatus != null) {
-        Text(text = errorMessage, color = Color.Magenta, style = TextStyle(fontSize = 12.sp))
+        Text(
+            text = errorMessage,
+            color = Color.Magenta,
+            style = TextStyle(fontSize = 12.sp),
+            modifier = Modifier.padding(start = 16.dp, top = 4.dp) // Dodaj padding za error poruku
+        )
     }
 }
+
+
 
 
 
@@ -499,7 +518,7 @@ fun AppToolbar(
                 logoutButtonClicked.invoke()
             }) {
                 Icon(
-                    imageVector = Icons.Filled.Logout,
+                    imageVector = Icons.Default.Close,
                     contentDescription = "Log out",
                 )
             }
@@ -508,6 +527,35 @@ fun AppToolbar(
 }
 
 
+@Composable
+fun rememberMapViewWithLifecycle(): MapView {
+    val context = LocalContext.current
+    val mapView = remember { MapView(context) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+
+    DisposableEffect(lifecycle) {
+        val observer = getMapLifecycleObserver(mapView)
+        lifecycle.addObserver(observer)
+        onDispose {
+            lifecycle.removeObserver(observer)
+        }
+    }
+
+    return mapView
+}
+
+private fun getMapLifecycleObserver(mapView: MapView): LifecycleEventObserver =
+    LifecycleEventObserver { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_CREATE -> mapView.onCreate(null)
+            Lifecycle.Event.ON_START -> mapView.onStart()
+            Lifecycle.Event.ON_RESUME -> mapView.onResume()
+            Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+            Lifecycle.Event.ON_STOP -> mapView.onStop()
+            Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+            else -> {}
+        }
+    }
 
 
 

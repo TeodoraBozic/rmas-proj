@@ -13,6 +13,7 @@ import com.example.rmas18577.app.RunTogetherApp
 import com.example.rmas18577.ui.theme.RMAS18577Theme
 import android.provider.MediaStore
 import android.widget.Toast
+import com.google.android.gms.maps.OnMapReadyCallback
 
 class MainActivity : ComponentActivity() {
 
@@ -52,6 +53,8 @@ class MainActivity : ComponentActivity() {
         }
 
         requestPermissionsAtStart()
+
+
 
         setContent {
             RMAS18577Theme {

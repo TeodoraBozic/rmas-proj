@@ -5,26 +5,26 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Surface
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rmas18577.components.ClickableTextLogin
 import com.example.rmas18577.components.Heading
-import com.example.rmas18577.components.NormalTextComponent
-import com.example.rmas18577.components.ButtonComponent
 import com.example.rmas18577.components.MyTextFieldComponent
 import com.example.rmas18577.components.PasswordTextFieldComponent
+import com.example.rmas18577.components.ButtonComponent
+import com.example.rmas18577.components.NormalTextComponent
 import com.example.rmasprojekat18723.data.LoginUIEvent
 import com.example.rmasprojekat18723.data.LoginViewModel
 import com.example.rmasprojekat18723.navigation.Navigator
@@ -35,25 +35,30 @@ fun LoginScreen(loginViewModel: LoginViewModel = viewModel()) {
     var isPasswordVisible by remember { mutableStateOf(false) }
 
     val loginState = loginViewModel.loginUIState.value
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(10.dp) // Consistent padding
+
     ) {
         Surface(
+            color = Color.White,
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-                .padding(28.dp)
+                .fillMaxWidth() // Changed to fillMaxWidth for better alignment
+                .padding(8.dp)
+                .clip(RoundedCornerShape(8.dp))
+
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
+                    .padding(10.dp) // Consistent padding
             ) {
                 NormalTextComponent(value = "Zdravo")
                 Heading(value = "Prijavi se")
-                Spacer(modifier = Modifier.height(20.dp))
-
+                Spacer(modifier = Modifier.height(16.dp))
 
                 MyTextFieldComponent(
                     labelValue = "Email",
@@ -61,11 +66,11 @@ fun LoginScreen(loginViewModel: LoginViewModel = viewModel()) {
                     onTextChanged = {
                         loginViewModel.onEvent(LoginUIEvent.EmailChanged(it))
                     },
-                    errorStatus = loginState.emailError != null// Pristupamo direktno emailError iz loginState
+                    errorStatus = loginState.emailError != null
                 )
 
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // U funkciji SignUpScreen
                 PasswordTextFieldComponent(
                     labelValue = "Password",
                     icon = Icons.Default.Lock,
@@ -75,14 +80,11 @@ fun LoginScreen(loginViewModel: LoginViewModel = viewModel()) {
                     isPasswordVisible = isPasswordVisible,
                     onVisibilityToggle = {
                         isPasswordVisible = !isPasswordVisible
-                        Log.d("SignUpScreen", "Password visibility toggled: $isPasswordVisible")
+                        Log.d("LoginScreen", "Password visibility toggled: $isPasswordVisible")
                     }
                 )
 
-
-
-
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 ButtonComponent(
                     value = "Prijavi se",
@@ -92,7 +94,7 @@ fun LoginScreen(loginViewModel: LoginViewModel = viewModel()) {
                     isEnabled = loginViewModel.allValidationsPassed.value
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Divider(
                     modifier = Modifier
@@ -100,9 +102,9 @@ fun LoginScreen(loginViewModel: LoginViewModel = viewModel()) {
                         .padding(vertical = 16.dp)
                 )
 
-                ClickableTextLogin(tryingToLogin = false, onTextSelected = {
+                ClickableTextLogin(tryingToLogin = false) {
                     Navigator.navigateTo(Screen.SignUpScreen)
-                })
+                }
             }
         }
 
