@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">RMAS18577</string>
     <string name="hello">Dobrodosli</string>
+    <string name="channel_name">Location Service Channel</string>
+    <string name="channel_description">Channel for location tracking notifications</string>
+
 
 
 

@@ -18,6 +18,10 @@
 
 
 
+
+
+
+
     <application
         android:name=".RMAS18577"
         android:allowBackup="true"
@@ -28,6 +32,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.RMAS18577">
+
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyA_n1N9KFIrsvLfGevZ_uIdjBl0XJS-Z0w" />
@@ -39,6 +45,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".services.LocationService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location"/>
 
 
     </application>
