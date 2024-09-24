@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity(), ToastNotifier {
         mapViewModel = ViewModelProvider(this).get(MapViewModel::class.java)
 
         setContent {
-            MapScreen(mapViewModel)
+            MapScreen(mapViewModel) {}
         }
 
         // Initialize the ActivityResultLauncher for camera and gallery

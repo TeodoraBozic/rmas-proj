@@ -18,7 +18,6 @@ import com.example.rmas18577.screens.LoginScreen
 import com.example.rmas18577.screens.SignUpScreen
 import com.example.rmasprojekat18723.navigation.Screen
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.rmas18577.screens.AddObjectScreen
 import com.example.rmas18577.screens.MapScreen
 import com.example.rmasprojekat18723.navigation.Navigator
 
@@ -68,12 +67,11 @@ fun RunTogetherApp(
                 }
 
                 is Screen.MapScreen -> {
-                    MapScreen()
+                    MapScreen(
+                        onSuccess = {}
+                    )
                 }
-
-                Screen.AddObjectScreen -> {
-                    AddObjectScreen()
-                }
+                
             }
         }
 

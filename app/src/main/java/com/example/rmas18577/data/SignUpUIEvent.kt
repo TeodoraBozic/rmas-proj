@@ -16,4 +16,6 @@ sealed class SignupUIEvent{
 
 
     object RegisterButtonClicked : SignupUIEvent()
+
+    object LoadUsers : SignupUIEvent()
 }

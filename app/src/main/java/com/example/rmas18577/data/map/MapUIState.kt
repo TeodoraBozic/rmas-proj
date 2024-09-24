@@ -1,17 +1,14 @@
 package com.example.rmas18577.data.map
 
+import com.example.rmas18577.data.`object`.ObjectUIState
 import com.google.android.gms.maps.model.LatLng
 
-data class MapObject(
-    val id: String,
-    val name: String,
-    val location: LatLng
-)
+
 
 data class MapUIState(
-    val currentLocation: LatLng? = null,
-    val mapMarkers: List<LatLng> = emptyList(),
-    val mapObjects: List<MapObject> = emptyList(),
-    val mapError: String? = null
+    var currentLocation: LatLng? = null,
+    var mapMarkers: List<LatLng> = emptyList(),
+    var objects: List<ObjectUIState> = emptyList(),
+    var mapError: String? = null
 )
 

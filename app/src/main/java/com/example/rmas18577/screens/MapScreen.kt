@@ -3,11 +3,17 @@ package com.example.rmas18577.screens
 
 import ObjectViewModel
 import android.Manifest
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.util.Log
+import android.widget.RatingBar
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -18,34 +24,50 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Box
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.rmas18577.ToastNotifier
+import coil.compose.rememberImagePainter
+import com.example.rmas18577.Filters
 import com.example.rmas18577.ToastNotifierImpl
 import com.example.rmas18577.components.MyTextFieldComponent
 import com.example.rmas18577.components.rememberMapViewWithLifecycle
-import com.example.rmas18577.data.home.HomeViewModel
 import com.example.rmas18577.data.map.MapUIEvent
 import com.example.rmas18577.data.map.MapViewModel
 import com.example.rmas18577.data.`object`.ObjectUIEvent
+import com.example.rmas18577.data.`object`.ObjectUIState
 import com.example.rmas18577.navigation.SystemBackButtonHandler
+import com.example.rmasprojekat18723.data.SignupUIEvent
 import com.example.rmasprojekat18723.navigation.Navigator
 import com.example.rmasprojekat18723.navigation.Screen
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -53,233 +75,568 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
-
-
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 
 
 @Composable
 fun MapScreen(mapViewModel: MapViewModel = viewModel(),
               objectViewModel: ObjectViewModel = viewModel(),
-              homeViewModel: HomeViewModel = viewModel()) {
+              onSuccess: () -> Unit) {
     val context = LocalContext.current
-
-    var hasLocationPermission = ContextCompat.checkSelfPermission(
+    val hasLocationPermission = ContextCompat.checkSelfPermission(
         context, Manifest.permission.ACCESS_FINE_LOCATION
     ) == PackageManager.PERMISSION_GRANTED
-    val showAddRouteDialog = remember { mutableStateOf(false) }
-    val currentUser = FirebaseAuth.getInstance().currentUser
 
-    var currentLocation by remember { mutableStateOf<LatLng?>(null) }
     val mapState = mapViewModel.mapUIState.value
+    var isCameraMovedManually by remember { mutableStateOf(false) }
+    var showAddObjectDialog by remember { mutableStateOf(false) }
+    var showFilterDialog by remember { mutableStateOf(false) }
+    var selectedObject by remember { mutableStateOf<ObjectUIState?>(null) }
 
-    val toastNotifier = ToastNotifierImpl(context) // Inicijalizuj ToastNotifier
 
-    if (currentUser == null) {
-        Navigator.navigateTo(Screen.LogInScreen)
-    } else {
-        LaunchedEffect(Unit) {
-            homeViewModel.getUserData()
-        }
 
-        val requestPermissionLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) {
-                hasLocationPermission = true
-            } else {
-                Log.d("MapScreen", "Dozvola za lokaciju nije dodeljena.")
+
+
+    LaunchedEffect(Unit) {
+        mapViewModel.onEvent(MapUIEvent.LoadMarkers)
+    }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(16.dp)
+    ) {
+        if (hasLocationPermission) {
+            val mapView = rememberMapViewWithLifecycle()
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+            ) {
+                AndroidView(
+                    factory = { mapView },
+                    modifier = Modifier.fillMaxSize(),
+                    update = { map ->
+                        map.getMapAsync { googleMap ->
+                            googleMap.isMyLocationEnabled = true
+
+                            googleMap.clear()
+
+                            googleMap.setOnMyLocationChangeListener { location ->
+                                val latLng = LatLng(location.latitude, location.longitude)
+                                mapViewModel.onEvent(MapUIEvent.LocationUpdate(latLng))
+                                if (!isCameraMovedManually) {
+                                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+                                }
+                            }
+
+                            googleMap.setOnCameraMoveStartedListener {
+                                if (it == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
+                                    isCameraMovedManually = true
+                                }
+                            }
+
+                            googleMap.setOnMarkerClickListener { marker ->
+                                val clickedObject = mapState.objects.find { obj ->
+                                    obj.latitude == marker.position.latitude && obj.longitude == marker.position.longitude
+                                }
+                                if (clickedObject != null) {
+                                    selectedObject = clickedObject
+                                }
+                                false
+                            }
+
+
+                            if (mapState.mapMarkers.isNotEmpty()) {
+                                googleMap.clear()
+                                mapState.mapMarkers.forEach { markerLocation ->
+                                    Log.d("MapScreen", "Marker location: ${markerLocation.latitude}, ${markerLocation.longitude}")
+                                    googleMap.addMarker(
+                                        MarkerOptions()
+                                            .position(markerLocation)
+                                            .title("Marker at: ${markerLocation.latitude}, ${markerLocation.longitude}")
+                                    )
+                                    Log.d("MapScreen", "Marker added at: ${markerLocation.latitude}, ${markerLocation.longitude}")
+                                }
+                            } else {
+                                Log.e("MapScreen", "No markers to add on the map.")
+                            }
+                        }
+                    }
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "Location permission is not granted.")
             }
         }
 
-        LaunchedEffect(Unit) {
-            if (!hasLocationPermission) {
-                requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-            }
-        }
-
-        if (showAddRouteDialog.value) {
-            AddRouteDialog(
-                onDismiss = { showAddRouteDialog.value = false },
-                currentLocation = currentLocation,
-                objectViewModel = objectViewModel,
-                mapViewModel = mapViewModel,
-                toastNotifier = toastNotifier
-
+        mapState.mapError?.let {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(16.dp)
             )
         }
 
-        Surface(
+        selectedObject?.let { obj ->
+            ObjectDetailDialog(
+                obj = obj,
+                objectViewModel = objectViewModel,
+                mapViewModel = mapViewModel,
+                onDismiss = { selectedObject = null }
+            )
+        }
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
-                .padding(16.dp)
         ) {
-            if (hasLocationPermission) {
-                val mapView = rememberMapViewWithLifecycle()
 
-                Box(modifier = Modifier.fillMaxSize()) {
-                    AndroidView(
-                        factory = { mapView },
-                        modifier = Modifier.fillMaxSize(),
-                        update = { map ->
-                            map.getMapAsync { googleMap ->
-                                googleMap.isMyLocationEnabled = true
+            Button(
+                onClick = { showFilterDialog = true },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
+            ) {
+                Text(text = "Filter")
+            }
 
-                                googleMap.setOnMyLocationChangeListener { location ->
-                                    val latLng = LatLng(location.latitude, location.longitude)
-                                    currentLocation = latLng
-                                    mapViewModel.onEvent(MapUIEvent.LocationUpdate(latLng))
-                                    googleMap.moveCamera(
-                                        CameraUpdateFactory.newLatLngZoom(
-                                            latLng,
-                                            15f
-                                        )
-                                    )
-                                }
-
-
-                                loadMarkers(googleMap, mapState.mapMarkers)
-                            }
-                        }
-                    )
-
-                    Button(
-                        onClick = { showAddRouteDialog.value = true },
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .size(120.dp, 48.dp)
-                            .align(Alignment.BottomStart)
-                    ) {
-                        Text("Dodaj Rutu")
-                    }
-
-                    mapState.mapError?.let {
-                        Text(
-                            text = it,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                }
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "Dozvola za lokaciju nije dodeljena.")
-                }
+            Button(
+                onClick = { showAddObjectDialog = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Text(text = "Add Object")
             }
         }
+
+        if (showAddObjectDialog) {
+            AddObjectDialog(
+                currentLocation = mapViewModel.mapUIState.value.currentLocation,
+                onDismiss = { showAddObjectDialog = false },
+                onSuccess = {
+                    showAddObjectDialog = false
+                    mapViewModel.onEvent(MapUIEvent.LoadMarkers)
+                    onSuccess()
+                }
+            )
+        }
+        if (showFilterDialog) {
+            FilterDialog(
+                onDismiss = { showFilterDialog = false },
+                onApply = { filters ->
+                    mapViewModel.onEvent(MapUIEvent.ApplyFilters(filters))
+                    showFilterDialog = false
+                }
+            )
+        }
+
         SystemBackButtonHandler {
             Navigator.navigateTo(Screen.MainPage)
         }
 
+
     }
+
+
 }
-private fun loadMarkers(googleMap: GoogleMap, markers: List<LatLng>) {
-    googleMap.clear() // Clear existing markers
-    markers.forEach { markerLocation ->
-        googleMap.addMarker(MarkerOptions().position(markerLocation))
-    }
+
+
+
+
+@Composable
+fun FilterDialog(
+    onDismiss: () -> Unit,
+    onApply: (Filters) -> Unit
+) {
+    var user by remember { mutableStateOf("") }
+    var ratingFrom by remember { mutableStateOf("") }
+    var ratingTo by remember { mutableStateOf("") }
+    var startDate by remember { mutableStateOf<Long?>(null) }
+    var endDate by remember { mutableStateOf<Long?>(null) }
+    var radius by remember { mutableStateOf("") }
+
+    val calendar = Calendar.getInstance()
+
+    val context = LocalContext.current
+
+    val startDatePickerDialog = DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            calendar.set(Calendar.YEAR, year)
+            calendar.set(Calendar.MONTH, month)
+            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+            TimePickerDialog(
+                context,
+                { _, hourOfDay, minute ->
+                    calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                    calendar.set(Calendar.MINUTE, minute)
+                    startDate = calendar.timeInMillis
+                },
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE),
+                true
+            ).show()
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+
+    val endDatePickerDialog = DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            calendar.set(Calendar.YEAR, year)
+            calendar.set(Calendar.MONTH, month)
+            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+            TimePickerDialog(
+                context,
+                { _, hourOfDay, minute ->
+                    calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                    calendar.set(Calendar.MINUTE, minute)
+                    endDate = calendar.timeInMillis
+                },
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE),
+                true
+            ).show()
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Filter Options") },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                TextField(
+                    value = user,
+                    onValueChange = { user = it },
+                    label = { Text("Username") }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TextField(
+                    value = radius,
+                    onValueChange = { radius = it },
+                    label = { Text("Radius (meters)") },
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row {
+                    TextField(
+                        value = ratingFrom,
+                        onValueChange = { ratingFrom = it },
+                        label = { Text("Rating From") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextField(
+                        value = ratingTo,
+                        onValueChange = { ratingTo = it },
+                        label = { Text("Rating To") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(onClick = { startDatePickerDialog.show() }) {
+                    Text(text = "Pick Start Date & Time")
+                }
+                if (startDate != null) {
+                    Text(
+                        text = "Start Date & Time: ${Calendar.getInstance().apply { timeInMillis = startDate!! }.time}",
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(onClick = { endDatePickerDialog.show() }) {
+                    Text(text = "Pick End Date & Time")
+                }
+                if (endDate != null) {
+                    Text(
+                        text = "End Date & Time: ${Calendar.getInstance().apply { timeInMillis = endDate!! }.time}",
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                val filters = Filters(
+                    user = user,
+                    ratingFrom = ratingFrom.toIntOrNull(),
+                    ratingTo = ratingTo.toIntOrNull(),
+                    startDate = startDate,
+                    endDate = endDate,
+                    radius = radius.toFloatOrNull()
+                )
+                onApply(filters)
+            }) {
+                Text(text = "Apply")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text(text = "Cancel")
+            }
+        }
+    )
+}
+
+
+
+@Composable
+fun ObjectDetailDialog(
+    obj: ObjectUIState,
+    objectViewModel: ObjectViewModel,
+    mapViewModel: MapViewModel,
+    onDismiss: () -> Unit
+) {
+    var userRating by remember { mutableStateOf(5) }
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val isOwner = obj.userId == currentUser?.uid
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = obj.locationName,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+
+                Text(text = "Description: ${obj.details}")
+                //Text(text = "Start Time: ${formatTimestamp(obj.startTime)}")
+                Text(text = "Average Grade: ${obj.points}")
+                Text(text = "Posted by: ${obj.postedByUsername}")
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (!isOwner) {
+                    Text(text = "Rate this object:", modifier = Modifier.padding(vertical = 8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AndroidView(factory = { context ->
+                            RatingBar(context).apply {
+                                numStars = 10
+                                stepSize = 1f
+                                rating = userRating.toFloat()
+                                setIsIndicator(false)
+                                scaleX = 0.8f
+                                scaleY = 0.8f
+                                setOnRatingBarChangeListener { _, rating, _ ->
+                                    userRating = rating.toInt()
+                                }
+                            }
+                        })
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                } else {
+                    Text(text = "You cannot rate your own object.", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    objectViewModel.handleEvent(ObjectUIEvent.RateObject(obj.objectId, userRating) {
+                        mapViewModel.onEvent(MapUIEvent.LoadMarkers)
+                        onDismiss()
+                    })
+                }
+            ) {
+                Text(text = "Submit Rating")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text(text = "Cancel")
+            }
+        }
+    )
 }
 
 
 
     @Composable
-    fun AddRouteDialog(
-        onDismiss: () -> Unit,
+    fun AddObjectDialog(
         currentLocation: LatLng?,
-        objectViewModel: ObjectViewModel,
-        mapViewModel: MapViewModel,
-        toastNotifier: ToastNotifier
+        objectViewModel: ObjectViewModel = viewModel(),
+        mapViewModel: MapViewModel = viewModel(),
+        onDismiss: () -> Unit,
+        onSuccess: () -> Unit
     ) {
-        var routeName by remember { mutableStateOf("") }
-        var routeDescription by remember { mutableStateOf("") }
-        val timestamp = System.currentTimeMillis()
+        val context = LocalContext.current
+        val objectState by objectViewModel.objectUIState
+
+        val calendar = Calendar.getInstance()
+
+        var selectedDate by remember { mutableStateOf("") }
+        var selectedTime by remember { mutableStateOf("") }
+
+        val toastNotifier = ToastNotifierImpl(context)
+
+
+        val datePickerDialog = DatePickerDialog(
+            LocalContext.current,
+            { _, year, month, dayOfMonth ->
+                selectedDate = "$dayOfMonth/${month + 1}/$year"
+                calendar.set(Calendar.YEAR, year)
+                calendar.set(Calendar.MONTH, month)
+                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+
+        val timePickerDialog = TimePickerDialog(
+            LocalContext.current,
+            { _, hourOfDay, minute ->
+                selectedTime = "$hourOfDay:$minute"
+                calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                calendar.set(Calendar.MINUTE, minute)
+            },
+            calendar.get(Calendar.HOUR_OF_DAY),
+            calendar.get(Calendar.MINUTE),
+            true
+        )
 
         AlertDialog(
-            onDismissRequest = { onDismiss() },
-            title = { Text(text = "Dodaj Rutu") },
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    text = "Dodajte svoju rutu",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            },
             text = {
-                Column {
-                    currentLocation?.let {
-                        Text(text = "Trenutna Lokacija: ${it.latitude}, ${it.longitude}")
-                    } ?: Text(text = "Trenutna Lokacija: Nepoznato")
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
 
                     MyTextFieldComponent(
                         labelValue = "Ime lokacije",
                         Icons.Default.LocationOn,
                         onTextChanged = {
-                            routeName = it // Postavi ime lokacije
-                            objectViewModel.handleEvent(ObjectUIEvent.LocationNameChanged(it))
-                        }
+                            objectViewModel.handleEvent(
+                                ObjectUIEvent.LocationNameChanged(
+                                    it
+                                )
+                            )
+                        },
                     )
                     MyTextFieldComponent(
-                        labelValue = "Opis lokacije",
+                        labelValue = "Detaljni opis",
                         Icons.Default.Note,
                         onTextChanged = {
-                            routeDescription = it // Postavi opis lokacije
-                            objectViewModel.handleEvent(ObjectUIEvent.DetailsChanged(it))
-                        }
+                            objectViewModel.handleEvent(
+                                ObjectUIEvent.DetailsChanged(
+                                    it
+                                )
+                            )
+                        },
                     )
+
+
+                    Button(onClick = { datePickerDialog.show() }) {
+                        Text(text = "Pick Date")
+                    }
+
+                    if (selectedDate.isNotEmpty()) {
+                        Text(
+                            text = "Selected Date: $selectedDate",
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+
+                    Button(onClick = { timePickerDialog.show() }) {
+                        Text(text = "Pick Time")
+                    }
+
+                    if (selectedTime.isNotEmpty()) {
+                        Text(
+                            text = "Selected Time: $selectedTime",
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        if (routeName.isEmpty() || routeDescription.isEmpty()) {
-                            Log.d("AddRouteDialog", "Polja za ime i opis moraju biti popunjena.")
-                        } else {
-                            currentLocation?.let { location ->
-                                val latitude = location.latitude
-                                val longitude = location.longitude
+                Button(onClick = {
+                    // Uzimamo trenutnu lokaciju iz mapViewModel
 
-                                objectViewModel.addObject(
-                                    locationName = routeName,
-                                    latitude = latitude,
-                                    longitude = longitude,
-                                    timestamp = timestamp,
-                                    details = routeDescription,
-                                    points = 0.0, // Po potrebi koristi null ili specijalnu vrednost
-                                ) { success, message ->
-                                    if (success) {
-                                        Log.d("AddRouteDialog", "Ruta je uspešno dodata!")
+                    val currentLocation = mapViewModel.mapUIState.value.currentLocation
 
-                                        // Dodaj marker na mapu bez ID-a
-                                        mapViewModel.onEvent(
-                                            MapUIEvent.AddMapObject(
-                                                routeName,
-                                                LatLng(latitude, longitude)
-                                            )
-                                        )
-                                        toastNotifier.showToast("Ruta uspešno dodata!")
+                    // Uzimamo trenutno vreme
+                    val timestamp = calendar.timeInMillis
 
-                                    } else {
-                                        Log.d(
-                                            "AddRouteDialog",
-                                            message ?: "Greška prilikom dodavanja rute."
-                                        )
-                                    }
-                                }
-                            } ?: run {
-                                Log.d(
-                                    "AddRouteDialog",
-                                    "Lokacija nije dostupna, ne može se dodati ruta."
-                                )
-                            }
-                            onDismiss()
-                        }
-                    }
-                ) {
-                    Text("Dodaj")
+                    // Triggerovanje događaja za dodavanje objekta
+                    objectViewModel.handleEvent(
+                        ObjectUIEvent.AddObjectClicked(
+                            onSuccess = {
+                                Log.d("TAG", "Objekat je uspešno dodat!")
+                                toastNotifier.showToast("Objekat je uspešno dodat!")
+
+                                // Ovdje možeš dodati kod za ažuriranje UI ili prikazivanje poruke korisniku
+                            },
+                            currentLocation = currentLocation,
+                            timestamp = timestamp
+
+                        )
+                    )
+                }) {
+                    Text(text = "Add Object")
                 }
             },
             dismissButton = {
-                Button(onClick = { onDismiss() }) {
-                    Text("Otkaži")
+                Button(onClick = onDismiss) {
+                    Text(text = "Cancel")
                 }
             }
+
+
         )
     }
+
 

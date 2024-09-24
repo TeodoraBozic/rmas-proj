@@ -3,6 +3,7 @@ package com.example.rmasprojekat18723.data
 import android.net.Uri
 
 data class RegistrationUIState(
+    var userId: String = "",
     var username : String = "",
     var firstName :String = "",
     var lastName  :String = "",
@@ -11,6 +12,7 @@ data class RegistrationUIState(
     var password  :String = "",
     var password2 :String =" ",
     val imageUri: Uri? = null,
+    var points: Int = 0,
 
 
     var usernameError:Boolean =false,

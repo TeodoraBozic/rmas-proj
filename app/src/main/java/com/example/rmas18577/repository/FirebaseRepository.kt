@@ -1,5 +1,3 @@
-import android.net.Uri
-import android.util.Log
 import com.example.rmas18577.data.`object`.ObjectUIState
 import com.example.rmasprojekat18723.data.LoginUIState
 import com.google.firebase.auth.FirebaseAuth
@@ -48,7 +46,7 @@ class FirebaseRepository {
                         // Rukom mapiraj podatke iz Firestore-a u ObjectUIState
                         val objectUIState = ObjectUIState(
                             objectId = objectId, // Dodaj objectId
-                            userId = (it["userId"] as? Long)?.toInt() ?: 0, // Pretvori userId iz Long-a u Int
+                            userId = it["userId"] as? String ?: "", // Pretvori userId iz Long-a u Int
                             locationName = it["locationName"] as? String ?: "",
                             latitude = it["latitude"] as? Double ?: 0.0,
                             longitude = it["longitude"] as? Double ?: 0.0,

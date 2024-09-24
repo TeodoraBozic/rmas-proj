@@ -23,6 +23,7 @@ class SignupViewModel : ViewModel() {
     var signUpInProgress = mutableStateOf(false)
     private val _selectedImageUri = MutableLiveData<Uri?>()
     val selectedImageUri: LiveData<Uri?> = _selectedImageUri
+    var usersState = mutableStateOf<List<RegistrationUIState>>(emptyList())
 
     fun onEvent(event: SignupUIEvent) {
         when (event) {
@@ -65,6 +66,9 @@ class SignupViewModel : ViewModel() {
                 } else {
                     Log.d(TAG, "Validations not passed")
                 }
+            }
+            is SignupUIEvent.LoadUsers -> {
+                loadAllUsers()
             }
         }
     }
@@ -185,6 +189,30 @@ class SignupViewModel : ViewModel() {
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "Failed to upload image", e)
+            }
+    }
+
+
+    private fun loadAllUsers() {
+        val firestore = FirebaseFirestore.getInstance()
+        firestore.collection("users").get()
+            .addOnSuccessListener { result ->
+                val users = result.documents.map { document ->
+                    RegistrationUIState(
+                        userId = document.id,
+                        username = document.getString("username") ?: "",
+                        firstName = document.getString("firstName") ?: "",
+                        lastName = document.getString("lastName") ?: "",
+                        phonenumber = document.getString("phonenumber") ?: "",
+                        email = document.getString("email") ?: "",
+                        points = document.getLong("points")?.toInt() ?: 0,
+                        imageUri = document.getString("imageUri")?.let { Uri.parse(it) }
+                    )
+                }
+                usersState.value = users.sortedByDescending { it.points }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("SignUpViewModel", "Error loading users: ${exception.message}")
             }
     }
 
