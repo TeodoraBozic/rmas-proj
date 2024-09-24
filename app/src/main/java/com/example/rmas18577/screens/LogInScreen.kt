@@ -25,6 +25,7 @@ import com.example.rmas18577.components.MyTextFieldComponent
 import com.example.rmas18577.components.PasswordTextFieldComponent
 import com.example.rmas18577.components.ButtonComponent
 import com.example.rmas18577.components.NormalTextComponent
+import com.example.rmas18577.navigation.SystemBackButtonHandler
 import com.example.rmasprojekat18723.data.LoginUIEvent
 import com.example.rmasprojekat18723.data.LoginViewModel
 import com.example.rmasprojekat18723.navigation.Navigator
@@ -113,13 +114,8 @@ fun LoginScreen(loginViewModel: LoginViewModel = viewModel()) {
         }
     }
 
-    BackHandler {
+    SystemBackButtonHandler {
         Navigator.navigateTo(Screen.HomePage)
     }
 }
 
-@Preview
-@Composable
-fun LoginScreenPreview() {
-    LoginScreen()
-}

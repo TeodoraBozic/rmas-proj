@@ -19,6 +19,7 @@ import androidx.navigation.NavController
 import com.example.rmas18577.components.ButtonComponent
 import com.example.rmas18577.components.ClickableTextLogin
 import com.example.rmas18577.components.LoginOrRegisterButtons
+import com.example.rmas18577.navigation.SystemBackButtonHandler
 import com.example.rmas18577.ui.theme.Purple80
 import com.example.rmasprojekat18723.data.LoginUIEvent
 import com.example.rmasprojekat18723.data.LoginViewModel
@@ -76,6 +77,11 @@ fun HomePage(loginViewModel: LoginViewModel = viewModel(), signupViewModel: Sign
 
 
 
+
+        SystemBackButtonHandler {
+            Navigator.navigateTo(Screen.MainPage)
+        }
+
     }
 }
 
@@ -90,8 +96,4 @@ fun HomePageScreen(navController: NavController) {
         }
     )
 }
-@Preview
-@Composable
-fun DefaultPreviewOfHomePageScreen() {
-    HomePage()
-}
+

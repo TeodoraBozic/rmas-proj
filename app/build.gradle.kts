@@ -83,6 +83,12 @@ dependencies {
     implementation(libs.firebase.database.ktx)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.messaging.ktx)
+    implementation (libs.firebase.appcheck.safetynet)
+
+    implementation ("androidx.compose.material:material:<version>")
+    implementation ("androidx.compose.ui:ui-tooling-preview:<version>")
+
+
 
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)

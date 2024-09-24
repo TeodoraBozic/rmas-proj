@@ -52,6 +52,13 @@ class LoginViewModel : ViewModel() {
         allValidationsPassed.value = emailResult.status && passwordResult.status
     }
 
+    fun logout() {
+        FirebaseAuth.getInstance().signOut()
+        Navigator.navigateTo(Screen.LogInScreen)
+    }
+
+
+
     private fun login() {
         loginInProgress.value = true
         val email = loginUIState.value.email
@@ -62,11 +69,17 @@ class LoginViewModel : ViewModel() {
             .addOnCompleteListener { task ->
                 loginInProgress.value = false
                 if (task.isSuccessful) {
-                    Log.d(TAG, "Login successful")
-                    Navigator.navigateTo(Screen.MainPage)
+                    val currentUser = FirebaseAuth.getInstance().currentUser
+                    if (currentUser != null) {
+                        Log.d(TAG, "Login successful, user: ${currentUser.email}")
+                        Navigator.navigateTo(Screen.MainPage)
+                    } else {
+                        Log.d(TAG, "Login successful, but user is null")
+                    }
                 } else {
                     Log.d(TAG, "Login failed: ${task.exception?.localizedMessage}")
                 }
+
             }
     }
 }

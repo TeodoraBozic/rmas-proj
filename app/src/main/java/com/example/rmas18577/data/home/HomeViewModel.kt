@@ -1,15 +1,18 @@
 package com.example.rmas18577.data.home
 
+import ObjectViewModel
 import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import com.example.rmas18577.data.NavigationItem
+import com.example.rmas18577.data.`object`.ObjectUIState
 import com.example.rmasprojekat18723.navigation.Navigator
 import com.example.rmasprojekat18723.navigation.Screen
 import com.google.firebase.auth.FirebaseAuth
@@ -17,8 +20,17 @@ import com.google.firebase.auth.FirebaseAuth
 class HomeViewModel : ViewModel() {
 
         private val TAG = HomeViewModel::class.simpleName
+       // val userObjects: MutableLiveData<List<ObjectUIState>> = MutableLiveData()
+        private val objectviewmodel = ObjectViewModel()
 
-        val navigationItemsList = listOf<NavigationItem>(
+
+
+
+
+
+
+
+    val navigationItemsList = listOf<NavigationItem>(
             NavigationItem(
                 title = "Home",
                 icon = Icons.Default.Home,
@@ -80,6 +92,15 @@ class HomeViewModel : ViewModel() {
                 }
             }
         }
+
+    fun fetchUserObjects() {
+        objectviewmodel.getAllUserObjects()
+    }
+
+    val userObjects = objectviewmodel.userObjects
+
+
+
 
 }
 

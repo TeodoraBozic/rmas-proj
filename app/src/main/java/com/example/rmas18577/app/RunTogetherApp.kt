@@ -1,6 +1,7 @@
 package com.example.rmas18577.app
 
 
+import MainPage
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.fillMaxSize
 //noinspection UsingMaterialAndMaterial3Libraries
@@ -17,7 +18,7 @@ import com.example.rmas18577.screens.LoginScreen
 import com.example.rmas18577.screens.SignUpScreen
 import com.example.rmasprojekat18723.navigation.Screen
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.rmas18577.screens.MainPage
+import com.example.rmas18577.screens.AddObjectScreen
 import com.example.rmas18577.screens.MapScreen
 import com.example.rmasprojekat18723.navigation.Navigator
 
@@ -59,13 +60,19 @@ fun RunTogetherApp(
                     HomePage()
                 }
                 is Screen.MainPage -> {
-                    MainPage(mapClick = {
-                        Navigator.navigateTo(Screen.MapScreen)
-
-                    })
+                        MainPage(
+                        mapClick = {
+                            Navigator.navigateTo(Screen.MapScreen)
+                        }
+                    )
                 }
+
                 is Screen.MapScreen -> {
                     MapScreen()
+                }
+
+                Screen.AddObjectScreen -> {
+                    AddObjectScreen()
                 }
             }
         }

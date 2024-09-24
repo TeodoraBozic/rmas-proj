@@ -6,9 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.rmas18577.screens.uploadImageToFirebaseStorage
 import com.example.rmasprojekat18723.navigation.Navigator
 import com.example.rmasprojekat18723.navigation.Screen
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 
@@ -57,9 +59,11 @@ class SignupViewModel : ViewModel() {
                 registrationUIState.value = registrationUIState.value.copy(phonenumber = event.phonenumber)
             }
             is SignupUIEvent.RegisterButtonClicked -> {
-                //ako su svi uslovi ispunjeni onda se poziva signUp()
+                Log.d(TAG, "Register button clicked")
                 if (allValidationsPassed.value) {
                     signUp()
+                } else {
+                    Log.d(TAG, "Validations not passed")
                 }
             }
         }
@@ -112,41 +116,78 @@ class SignupViewModel : ViewModel() {
         Log.d(TAG, "Inside_printState")
         Log.d(TAG, registrationUIState.value.toString())
     }
-
+//BITNOOOOOOOOOOOOOOO
     private fun createUserInFirebase(email: String, password: String) {
         signUpInProgress.value = true
 
         FirebaseAuth.getInstance()
             .createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
-                Log.d(TAG, "insideCompleteListener")
-                Log.d(TAG, "isSuccessful")
                 signUpInProgress.value = false
                 if (task.isSuccessful) {
-                    // Prikazi poruku o uspehu
-                    Log.d(TAG, "Registracija uspešna")
-                    Navigator.navigateTo(Screen.LogInScreen)
-                } else {
+                    Log.d(TAG, "User registration successful")
+                    val user = FirebaseAuth.getInstance().currentUser
+                    val userId = user?.uid ?: return@addOnCompleteListener
 
-                    Log.d(TAG, "Registracija nije uspela: ${task.exception?.message}")
+                    // Dodajte podatke o korisniku u Firestore
+                    val userData = hashMapOf(
+                        "username" to registrationUIState.value.username,
+                        "firstname" to registrationUIState.value.firstName,
+                        "lastname" to registrationUIState.value.lastName,
+                        "phoneNumber" to registrationUIState.value.phonenumber,
+                        "email" to email,
+
+                    )
+
+                    FirebaseFirestore.getInstance().collection("users").document(userId)
+                        .set(userData)
+                        .addOnSuccessListener {
+                            Log.d(TAG, "Uso sam u addOnSuccessListener funckiju")
+
+                            Log.d(TAG, "Image URI: ${registrationUIState.value.imageUri}")
+
+                            registrationUIState.value.imageUri?.let { imageUri ->
+                                uploadImageToFirebaseStorage(imageUri, userId)
+                                Navigator.navigateTo(Screen.LogInScreen)
+                            } ?: run {
+                            }
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.d(TAG, "Failed to save user data: ${exception.message}")
+                        }
+
+                } else {
+                    Log.d(TAG, "Registration failed: ${task.exception?.message}")
+
 
                 }
             }
     }
-    private fun uploadImageToFirebaseStorage(imageUri: Uri?) {
-        imageUri?.let {
-            val storageRef = FirebaseStorage.getInstance().reference
-            val imagesRef = storageRef.child("profile_images/${System.currentTimeMillis()}_${imageUri.lastPathSegment}")
 
-            imagesRef.putFile(imageUri)
-                .addOnSuccessListener {
-                    Log.d("SignUpViewModel", "Image uploaded successfully")
+    private fun uploadImageToFirebaseStorage(imageUri: Uri, userId: String) {
+        val storageRef = FirebaseStorage.getInstance().reference
+        val imagesRef = storageRef.child("profile_images/${System.currentTimeMillis()}_${imageUri.lastPathSegment}")
+
+        imagesRef.putFile(imageUri)
+            .addOnSuccessListener {
+                imagesRef.downloadUrl.addOnSuccessListener { downloadUrl ->
+                    // Ažurirajte URL slike u Firestore
+                    FirebaseFirestore.getInstance().collection("users").document(userId)
+                        .update("photoUrl", downloadUrl.toString())
+                        .addOnSuccessListener {
+                            Log.d(TAG, "Image URL updated successfully")
+                            Navigator.navigateTo(Screen.LogInScreen)
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.d(TAG, "Failed to update image URL: ${exception.message}")
+                        }
                 }
-                .addOnFailureListener { e ->
-                    Log.e("SignUpViewModel", "Failed to upload image", e)
-                }
-        }
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to upload image", e)
+            }
     }
+
 
 }
 

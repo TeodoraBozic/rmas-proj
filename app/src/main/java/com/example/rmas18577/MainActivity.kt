@@ -18,19 +18,41 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import androidx.core.content.ContextCompat
 import androidx.core.app.ActivityCompat
 import android.content.pm.PackageManager
+import androidx.lifecycle.ViewModelProvider
+import com.example.rmas18577.data.map.MapViewModel
+import com.example.rmas18577.screens.MapScreen
 import com.example.rmas18577.services.LocationService
+import com.example.rmasprojekat18723.navigation.Navigator
+import com.example.rmasprojekat18723.navigation.Screen
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.firebase.auth.FirebaseAuth
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), ToastNotifier {
 
     private lateinit var cameraLauncher: ActivityResultLauncher<Intent>
     private lateinit var galleryLauncher: ActivityResultLauncher<Intent>
     private lateinit var permissionsLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var locationPermissionsLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var mapViewModel: MapViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            // Korisnik je prijavljen, preusmeri ga na glavnu stranicu
+            Navigator.navigateTo(Screen.MainPage)
+        } else {
+            // Korisnik nije prijavljen, prikaži ekran za prijavu
+            Navigator.navigateTo(Screen.LogInScreen)
+        }
         // Enable edge-to-edge if needed
+
+        mapViewModel = ViewModelProvider(this).get(MapViewModel::class.java)
+
+        setContent {
+            MapScreen(mapViewModel)
+        }
 
         // Initialize the ActivityResultLauncher for camera and gallery
         cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -71,6 +93,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+
         requestPermissionsAtStart()
 
         setContent {
@@ -81,6 +104,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+
+    override fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
 

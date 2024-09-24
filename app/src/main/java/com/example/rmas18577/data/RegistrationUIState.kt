@@ -10,7 +10,7 @@ data class RegistrationUIState(
     var email  :String = "",
     var password  :String = "",
     var password2 :String =" ",
-    val imageUri: Uri? = null, // Dodajte ovo,
+    val imageUri: Uri? = null,
 
 
     var usernameError:Boolean =false,

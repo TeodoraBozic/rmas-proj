@@ -260,15 +260,11 @@ fun SignUpScreen(signupViewModel: SignupViewModel = viewModel()) {
             }
         }
 
-        // Handling back button
+
         SystemBackButtonHandler {
             Navigator.navigateTo(Screen.HomePage)
         }
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun SignUpScreenPreview() {
-    SignUpScreen()
-}
+

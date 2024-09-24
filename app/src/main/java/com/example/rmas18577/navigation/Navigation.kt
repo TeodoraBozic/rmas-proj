@@ -10,6 +10,7 @@ sealed class Screen {
     object HomePage : Screen()
     object MainPage: Screen()
     object MapScreen : Screen()
+    object AddObjectScreen: Screen()
 }
 
 
