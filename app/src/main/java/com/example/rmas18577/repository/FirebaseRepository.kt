@@ -35,38 +35,7 @@ class FirebaseRepository {
             }
     }
 
-    fun getObjectById(objectId: String, onResult: (ObjectUIState?) -> Unit) {
-        val db = FirebaseFirestore.getInstance()
 
-        db.collection("objects").document(objectId).get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val data = document.data
-                    data?.let {
-                        // Rukom mapiraj podatke iz Firestore-a u ObjectUIState
-                        val objectUIState = ObjectUIState(
-                            objectId = objectId, // Dodaj objectId
-                            userId = it["userId"] as? String ?: "", // Pretvori userId iz Long-a u Int
-                            locationName = it["locationName"] as? String ?: "",
-                            latitude = it["latitude"] as? Double ?: 0.0,
-                            longitude = it["longitude"] as? Double ?: 0.0,
-                            timestamp = it["timestamp"] as? Long ?: 0L,
-                            details = it["details"] as? String,
-                            points = it["points"] as? Double ?: 0.0,
-
-                        )
-                        onResult(objectUIState)
-                    } ?: run {
-                        onResult(null) // Ako nema podataka
-                    }
-                } else {
-                    onResult(null) // Ako dokument ne postoji
-                }
-            }
-            .addOnFailureListener {
-                onResult(null) // U slučaju greške
-            }
-    }
 
 }
 

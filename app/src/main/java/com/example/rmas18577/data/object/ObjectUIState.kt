@@ -9,11 +9,12 @@ data class ObjectUIState(
     val latitude: Double = 0.0,         // Geografska širina
     val longitude: Double = 0.0,        // Geografska dužina
     val timestamp: Long = 0L,           // Vreme označavanja (u milisekundama)
-    val details: String? = null,        // Dodatni detalji
+    val details: String = "",        // Dodatni detalji
     val points: Double = 0.0,           // Poeni
     var userRatings: MutableMap<String, Int> = mutableMapOf(),
     var postedByUsername: String = "",
     var objects: List<ObjectUIState> = emptyList(),
+
 
 
 )

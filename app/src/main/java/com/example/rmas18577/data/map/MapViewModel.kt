@@ -22,7 +22,7 @@ class MapViewModel : ViewModel() {
                 )
             }
             is MapUIEvent.LoadMarkers -> {
-                loadMarkers()
+                loadMarkers() //ovo treba da azurira valjda
             }
             is MapUIEvent.ShowError -> {
                 mapUIState.value = mapUIState.value.copy(
@@ -38,16 +38,24 @@ class MapViewModel : ViewModel() {
     private fun loadMarkers() {
         val firestore = FirebaseFirestore.getInstance()
 
-        firestore.collection("objects").get()
-            .addOnSuccessListener { result ->
+        firestore.collection("objects")
+            .addSnapshotListener { result, exception ->
+                if (exception != null) {
+                    mapUIState.value = mapUIState.value.copy(
+                        mapError = "Error loading markers: ${exception.message}"
+                    )
+                    return@addSnapshotListener
+                }
+
                 val markers = mutableListOf<LatLng>()
                 val objects = mutableListOf<ObjectUIState>()
-                for (document in result) {
+                result?.documents?.forEach { document ->
                     val lat = document.getDouble("latitude")
                     val lon = document.getDouble("longitude")
 
                     if (lat != null && lon != null) {
                         markers.add(LatLng(lat, lon))
+
 
                         val obj = ObjectUIState(
                             objectId = document.id,
@@ -70,11 +78,7 @@ class MapViewModel : ViewModel() {
                 )
                 Log.d("MapViewModel", "Total markers loaded: ${markers.size}")
             }
-            .addOnFailureListener { exception ->
-                mapUIState.value = mapUIState.value.copy(
-                    mapError = "Error loading markers: ${exception.message}"
-                )
-            }
+
     }
 
     private fun applyFilters(filters: Filters) {

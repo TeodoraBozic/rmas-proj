@@ -47,6 +47,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -493,122 +494,120 @@ fun ObjectDetailDialog(
 
 
 
-    @Composable
-    fun AddObjectDialog(
-        currentLocation: LatLng?,
-        objectViewModel: ObjectViewModel = viewModel(),
-        mapViewModel: MapViewModel = viewModel(),
-        onDismiss: () -> Unit,
-        onSuccess: () -> Unit
-    ) {
-        val context = LocalContext.current
-        val objectState by objectViewModel.objectUIState
+@Composable
+fun AddObjectDialog(
+    currentLocation: LatLng?,
+    objectViewModel: ObjectViewModel = viewModel(),
+    mapViewModel: MapViewModel = viewModel(),
+    onDismiss: () -> Unit,
+    onSuccess: () -> Unit
+) {
+    val context = LocalContext.current
+    val objectState by objectViewModel.objectUIState.collectAsState()
 
-        val calendar = Calendar.getInstance()
+    val calendar = Calendar.getInstance()
 
-        var selectedDate by remember { mutableStateOf("") }
-        var selectedTime by remember { mutableStateOf("") }
+    var selectedDate by remember { mutableStateOf("") }
+    var selectedTime by remember { mutableStateOf("") }
 
-        val toastNotifier = ToastNotifierImpl(context)
+    val toastNotifier = ToastNotifierImpl(context)
 
+    val datePickerDialog = DatePickerDialog(
+        LocalContext.current,
+        { _, year, month, dayOfMonth ->
+            selectedDate = "$dayOfMonth/${month + 1}/$year"
+            calendar.set(Calendar.YEAR, year)
+            calendar.set(Calendar.MONTH, month)
+            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
 
-        val datePickerDialog = DatePickerDialog(
-            LocalContext.current,
-            { _, year, month, dayOfMonth ->
-                selectedDate = "$dayOfMonth/${month + 1}/$year"
-                calendar.set(Calendar.YEAR, year)
-                calendar.set(Calendar.MONTH, month)
-                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
-        )
+    val timePickerDialog = TimePickerDialog(
+        LocalContext.current,
+        { _, hourOfDay, minute ->
+            selectedTime = "$hourOfDay:$minute"
+            calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+            calendar.set(Calendar.MINUTE, minute)
+        },
+        calendar.get(Calendar.HOUR_OF_DAY),
+        calendar.get(Calendar.MINUTE),
+        true
+    )
 
-        val timePickerDialog = TimePickerDialog(
-            LocalContext.current,
-            { _, hourOfDay, minute ->
-                selectedTime = "$hourOfDay:$minute"
-                calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
-                calendar.set(Calendar.MINUTE, minute)
-            },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
-            true
-        )
-
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = {
-                Text(
-                    text = "Dodajte svoju rutu",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Dodajte svoju rutu",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                MyTextFieldComponent(
+                    labelValue = "Ime lokacije",
+                    Icons.Default.LocationOn,
+                    onTextChanged = {
+                        objectViewModel.handleEvent(
+                            ObjectUIEvent.LocationNameChanged(it)
+                        )
+                    },
                 )
-            },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                ) {
-
-                    MyTextFieldComponent(
-                        labelValue = "Ime lokacije",
-                        Icons.Default.LocationOn,
-                        onTextChanged = {
-                            objectViewModel.handleEvent(
-                                ObjectUIEvent.LocationNameChanged(
-                                    it
-                                )
-                            )
-                        },
-                    )
-                    MyTextFieldComponent(
-                        labelValue = "Detaljni opis",
-                        Icons.Default.Note,
-                        onTextChanged = {
-                            objectViewModel.handleEvent(
-                                ObjectUIEvent.DetailsChanged(
-                                    it
-                                )
-                            )
-                        },
-                    )
-
-
-                    Button(onClick = { datePickerDialog.show() }) {
-                        Text(text = "Pick Date")
-                    }
-
-                    if (selectedDate.isNotEmpty()) {
-                        Text(
-                            text = "Selected Date: $selectedDate",
-                            modifier = Modifier.padding(8.dp)
+                MyTextFieldComponent(
+                    labelValue = "Detaljni opis",
+                    Icons.Default.Note,
+                    onTextChanged = {
+                        objectViewModel.handleEvent(
+                            ObjectUIEvent.DetailsChanged(it)
                         )
-                    }
+                    },
+                )
 
-                    Button(onClick = { timePickerDialog.show() }) {
-                        Text(text = "Pick Time")
-                    }
-
-                    if (selectedTime.isNotEmpty()) {
-                        Text(
-                            text = "Selected Time: $selectedTime",
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    }
-
+                Button(onClick = { datePickerDialog.show() }) {
+                    Text(text = "Izaberi datum")
                 }
-            },
-            confirmButton = {
-                Button(onClick = {
-                    // Uzimamo trenutnu lokaciju iz mapViewModel
 
-                    val currentLocation = mapViewModel.mapUIState.value.currentLocation
+                if (selectedDate.isNotEmpty()) {
+                    Text(
+                        text = "Izabrani datum: $selectedDate",
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
 
-                    // Uzimamo trenutno vreme
+                Button(onClick = { timePickerDialog.show() }) {
+                    Text(text = "Izaberi vreme")
+                }
+
+                if (selectedTime.isNotEmpty()) {
+                    Text(
+                        text = "Izabrano vreme: $selectedTime",
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                // Uzimamo trenutnu lokaciju iz mapViewModel
+                val currentLocation = mapViewModel.mapUIState.value.currentLocation
+
+                // Ako su datum i vreme izabrani, postavi timestamp
+                if (selectedDate.isNotEmpty() && selectedTime.isNotEmpty()) {
+                    // Parse izabrani datum i vreme u Calendar
+                    val timeParts = selectedTime.split(":")
+                    calendar.set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
+                    calendar.set(Calendar.MINUTE, timeParts[1].toInt())
+
+                    // Uzimamo timestamp iz Calendar objekta
                     val timestamp = calendar.timeInMillis
 
                     // Triggerovanje događaja za dodavanje objekta
@@ -617,26 +616,23 @@ fun ObjectDetailDialog(
                             onSuccess = {
                                 Log.d("TAG", "Objekat je uspešno dodat!")
                                 toastNotifier.showToast("Objekat je uspešno dodat!")
-
-                                // Ovdje možeš dodati kod za ažuriranje UI ili prikazivanje poruke korisniku
+                                onSuccess() // Pozivamo onSuccess callback
                             },
                             currentLocation = currentLocation,
                             timestamp = timestamp
-
                         )
                     )
-                }) {
-                    Text(text = "Add Object")
+                } else {
+                    toastNotifier.showToast("Molimo izaberite datum i vreme.")
                 }
-            },
-            dismissButton = {
-                Button(onClick = onDismiss) {
-                    Text(text = "Cancel")
-                }
+            }) {
+                Text(text = "Dodaj objekat")
             }
-
-
-        )
-    }
-
-
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text(text = "Otkaži")
+            }
+        }
+    )
+}

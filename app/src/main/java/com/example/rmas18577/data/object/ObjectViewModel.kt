@@ -7,9 +7,12 @@ import androidx.lifecycle.ViewModel
 import com.example.rmas18577.data.`object`.ObjectUIEvent
 import com.example.rmas18577.data.`object`.ObjectUIState
 import com.example.rmas18577.data.`object`.Rating
+import com.example.rmasprojekat18723.data.RegistrationUIState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class ObjectViewModel() : ViewModel() {
 
@@ -18,14 +21,14 @@ class ObjectViewModel() : ViewModel() {
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
     private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 
-    private val _userObjects = MutableLiveData<List<ObjectUIState>>()
+    private val _objectUIState = MutableStateFlow(ObjectUIState())
+    val objectUIState: StateFlow<ObjectUIState> = _objectUIState
 
-
-    val userObjects: LiveData<List<ObjectUIState>> = _userObjects
+    var objstate = mutableStateOf<List<ObjectUIState>>(emptyList())
 
 
     // Initial state with required parameters
-    var objectUIState = mutableStateOf(
+   /* var objectUIState = mutableStateOf(
         ObjectUIState(
             objectId = "", // Placeholder value, to be updated when the object is created
             userId = "",
@@ -37,9 +40,11 @@ class ObjectViewModel() : ViewModel() {
             points = 0.0
         )
     )
-
+*/
     private val _objectState = MutableLiveData<ObjectUIState>()
     val objectState: LiveData<ObjectUIState> get() = _objectState
+
+
 
     private val _selectedImageUri = MutableLiveData<Uri?>()
     val selectedImageUri: LiveData<Uri?> = _selectedImageUri
@@ -48,31 +53,31 @@ class ObjectViewModel() : ViewModel() {
     fun handleEvent(event: ObjectUIEvent) {
         when (event) {
             is ObjectUIEvent.DetailsChanged -> {
-                objectUIState.value = objectUIState.value.copy(details = event.details)
+                _objectUIState.value = _objectUIState.value.copy(details = event.details)
                 printState()
             }
 
             is ObjectUIEvent.LatitudeChanged -> {
-                objectUIState.value = objectUIState.value.copy(latitude = event.latitude)
+                _objectUIState.value = _objectUIState.value.copy(latitude = event.latitude)
                 printState()
             }
 
             is ObjectUIEvent.LocationNameChanged -> {
-                objectUIState.value = objectUIState.value.copy(locationName = event.locationName)
+                _objectUIState.value = _objectUIState.value.copy(locationName = event.locationName)
                 printState()
             }
 
             is ObjectUIEvent.LongitudeChanged -> {
-                objectUIState.value = objectUIState.value.copy(longitude = event.longitude)
+                _objectUIState.value = _objectUIState.value.copy(longitude = event.longitude)
                 printState()
             }
 
             is ObjectUIEvent.PointsChanged -> {
-                objectUIState.value = objectUIState.value.copy(points = event.points)
+                _objectUIState.value = _objectUIState.value.copy(points = event.points)
                 printState()
             }
             is ObjectUIEvent.TimeStampChanged -> {
-                objectUIState.value = objectUIState.value.copy(timestamp = event.timeStamp)
+                _objectUIState.value = _objectUIState.value.copy(timestamp = event.timeStamp)
                 printState()
             }
             is ObjectUIEvent.AddObjectClicked -> {
@@ -130,7 +135,7 @@ class ObjectViewModel() : ViewModel() {
                     firestore.collection("objects").add(objectData)
                         .addOnSuccessListener { documentRef ->
                             val objectId = documentRef.id
-                            objectUIState.value = objectUIState.value.copy(objectId = objectId)
+                            _objectUIState.value = objectUIState.value.copy(objectId = objectId)
                             onSuccess() // Pozivamo onSuccess nakon uspešnog dodavanja
                             Log.d("TAG", "Objekat je uspešno dodat u bazu podataka")
                         }
@@ -143,31 +148,6 @@ class ObjectViewModel() : ViewModel() {
         }
     }
 
-
-
-    fun getAllUserObjects() {
-        val userId = auth.currentUser?.uid
-        Log.d(TAG, "Current User ID: $userId")
-        userId?.let {
-            db.collection("objects")
-                .whereEqualTo("ownerId", it) // Uveri se da koristiš ispravno ime polja
-                .get()
-                .addOnSuccessListener { documents ->
-                    Log.d(TAG, "Documents retrieved: ${documents.size()}")
-                    val objectsList = documents.map { document ->
-                        Log.d(TAG, "Document ID: ${document.id}, Data: ${document.data}")
-                        document.toObject(ObjectUIState::class.java).apply {
-                            objectId = document.id
-                        }
-                    }
-                    _userObjects.value = objectsList
-                    Log.d(TAG, "User objects list: $objectsList") // Loguj listu objekata
-                }
-                .addOnFailureListener { exception ->
-                    Log.e(TAG, "Error getting user objects: ", exception)
-                }
-        } ?: Log.w(TAG, "User ID is null")
-    }
 
     private fun updateUserPoints(userId: String, pointsToAdd: Int) {
         val firestore = FirebaseFirestore.getInstance()
@@ -313,24 +293,26 @@ class ObjectViewModel() : ViewModel() {
     }
 
 
-    private fun loadAllObjects() {
+    fun loadAllObjects() {
         val firestore = FirebaseFirestore.getInstance()
+        Log.d("ObjectViewModel", "Loading all objects...")
 
         firestore.collection("objects").get()
             .addOnSuccessListener { result ->
                 val objects = result.documents.map { document ->
                     ObjectUIState(
                         objectId = document.id,
-                        locationName = document.getString("title") ?: "",
+                        locationName = document.getString("locationname") ?: "",
                         latitude = document.getDouble("latitude") ?: 0.0,
                         longitude = document.getDouble("longitude") ?: 0.0,
                         timestamp = document.getLong("timestamp") ?: 0L,
-                        details = document.getString("description") ?: "",
-                        points = document.getDouble("avgGrade") ?: 0.0,
+                        details = document.getString("details") ?: "",
+                        points = document.getDouble("points") ?: 0.0,
                         userRatings = mutableMapOf()
                         )
                 }
-                objectUIState.value = objectUIState.value.copy(objects = objects)
+                _objectUIState.value = objectUIState.value.copy(objects = objects)
+                Log.d("ObjectViewModel", "Loaded objects: ${objects.size}")
 
             }
             .addOnFailureListener { exception ->
@@ -339,14 +321,14 @@ class ObjectViewModel() : ViewModel() {
     }
 
     private fun updateObjectInMapState(objectId: String, points: Double) {
-        val updatedObjects = objectUIState.value.objects.map { obj ->
+        val updatedObjects = _objectUIState.value.objects.map { obj ->
             if (obj.objectId == objectId) {
                 obj.copy(points = points)
             } else {
                 obj
             }
         }
-        objectUIState.value = objectUIState.value.copy(objects = updatedObjects)
+        _objectUIState.value = objectUIState.value.copy(objects = updatedObjects)
     }
 
 

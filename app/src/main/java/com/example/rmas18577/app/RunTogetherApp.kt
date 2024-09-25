@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.ViewModel
 import com.example.rmas18577.data.home.HomeViewModel
 import com.example.rmas18577.screens.HomePage
 import com.example.rmas18577.screens.LoginScreen
@@ -19,6 +20,9 @@ import com.example.rmas18577.screens.SignUpScreen
 import com.example.rmasprojekat18723.navigation.Screen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rmas18577.screens.MapScreen
+import com.example.rmas18577.screens.UsersInfo
+import com.example.rmas18577.screens.ViewObjects
+import com.example.rmasprojekat18723.data.SignupViewModel
 import com.example.rmasprojekat18723.navigation.Navigator
 
 
@@ -55,6 +59,9 @@ fun RunTogetherApp(
                 is Screen.LogInScreen -> {
                     LoginScreen()
                 }
+                is Screen.UsersInfo-> {
+                    UsersInfo(signUpViewModel = SignupViewModel())
+                }
                 is Screen.HomePage -> {
                     HomePage()
                 }
@@ -65,16 +72,22 @@ fun RunTogetherApp(
                         }
                     )
                 }
-
+                is Screen.ViewObjects -> {
+                    ViewObjects()
+                }
                 is Screen.MapScreen -> {
                     MapScreen(
                         onSuccess = {}
                     )
                 }
-                
+
+
             }
         }
 
 
     }
 }
+
+
+

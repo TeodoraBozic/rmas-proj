@@ -1,6 +1,8 @@
 [versions]
 agp = "8.6.0"
 coilCompose = "2.4.0"
+coilComposeVersion = "1.4.0"
+coilKtCoilCompose = "2.x.x"
 firebaseAppcheckSafetynet = "16.1.2"
 firebaseBom = "33.3.0"
 googlePlayServicesMaps = "18.0.2"
@@ -27,6 +29,8 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+coil-compose-v140 = { module = "io.coil-kt:coil-compose", version.ref = "coilComposeVersion" }
+coil-compose-v2xx = { module = "io.coil-kt:coil-compose", version.ref = "coilKtCoilCompose" }
 firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics-ktx" }
 firebase-appcheck-safetynet = { module = "com.google.firebase:firebase-appcheck-safetynet", version.ref = "firebaseAppcheckSafetynet" }
 firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx" }

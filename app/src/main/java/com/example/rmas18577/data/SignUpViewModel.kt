@@ -25,6 +25,7 @@ class SignupViewModel : ViewModel() {
     val selectedImageUri: LiveData<Uri?> = _selectedImageUri
     var usersState = mutableStateOf<List<RegistrationUIState>>(emptyList())
 
+
     fun onEvent(event: SignupUIEvent) {
         when (event) {
             is SignupUIEvent.ImageSelected -> {
@@ -180,6 +181,7 @@ class SignupViewModel : ViewModel() {
                         .update("photoUrl", downloadUrl.toString())
                         .addOnSuccessListener {
                             Log.d(TAG, "Image URL updated successfully")
+                            loadAllUsers() // Ponovo učitaj korisnike
                             Navigator.navigateTo(Screen.LogInScreen)
                         }
                         .addOnFailureListener { exception ->
@@ -193,11 +195,14 @@ class SignupViewModel : ViewModel() {
     }
 
 
+
     private fun loadAllUsers() {
         val firestore = FirebaseFirestore.getInstance()
         firestore.collection("users").get()
             .addOnSuccessListener { result ->
                 val users = result.documents.map { document ->
+                    val imageUrl = document.getString("photoUrl") // Promenio sam ovde
+                    Log.d("SignUpViewModel", "Loaded user image URL: $imageUrl") // Dodatni log
                     RegistrationUIState(
                         userId = document.id,
                         username = document.getString("username") ?: "",
@@ -206,7 +211,7 @@ class SignupViewModel : ViewModel() {
                         phonenumber = document.getString("phonenumber") ?: "",
                         email = document.getString("email") ?: "",
                         points = document.getLong("points")?.toInt() ?: 0,
-                        imageUri = document.getString("imageUri")?.let { Uri.parse(it) }
+                        imageUri = imageUrl?.let { Uri.parse(it) }
                     )
                 }
                 usersState.value = users.sortedByDescending { it.points }
@@ -215,6 +220,7 @@ class SignupViewModel : ViewModel() {
                 Log.e("SignUpViewModel", "Error loading users: ${exception.message}")
             }
     }
+
 
 
 }

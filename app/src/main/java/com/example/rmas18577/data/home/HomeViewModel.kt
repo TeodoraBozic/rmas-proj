@@ -93,11 +93,8 @@ class HomeViewModel : ViewModel() {
             }
         }
 
-    fun fetchUserObjects() {
-        objectviewmodel.getAllUserObjects()
-    }
 
-    val userObjects = objectviewmodel.userObjects
+
 
 
 
